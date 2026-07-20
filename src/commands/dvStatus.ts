@@ -9,12 +9,12 @@ import { loadConfig, saveConfig } from "../utils/config";
 
 export const dvStatusCommand = new SlashCommandBuilder()
     .setName("dv-status")
-    .setDescription("Set when DV is unavailable (reminders will pause)")
+    .setDescription("Set when DV is available")
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addSubcommand(subcommand =>
         subcommand
-            .setName("set-unavailable")
-            .setDescription("Set the unavailable date range for DV")
+            .setName("set-available")
+            .setDescription("Set the available date range for DV")
             .addStringOption(option =>
                 option
                     .setName("start-date")
@@ -30,8 +30,8 @@ export const dvStatusCommand = new SlashCommandBuilder()
     )
     .addSubcommand(subcommand =>
         subcommand
-            .setName("clear-unavailable")
-            .setDescription("Clear unavailable dates and resume reminders")
+            .setName("clear-available")
+            .setDescription("Clear available dates and pause reminders")
     )
     .addSubcommand(subcommand =>
         subcommand
@@ -56,7 +56,7 @@ export async function handleDvStatus(
     const subcommand = interaction.options.getSubcommand();
 
     try {
-        if (subcommand === "set-unavailable") {
+        if (subcommand === "set-available") {
             const startDate = interaction.options.getString("start-date", true);
             const endDate = interaction.options.getString("end-date", true);
 
@@ -87,27 +87,27 @@ export async function handleDvStatus(
             }
 
             const config = loadConfig();
-            config.dvUnavailableStart = startDate;
-            config.dvUnavailableEnd = endDate;
+            config.dvAvailableStart = startDate;
+            config.dvAvailableEnd = endDate;
             saveConfig(config);
 
             await interaction.reply({
-                content: `✅ DV unavailable period set!\n\n` +
+                content: `✅ DV available period set!\n\n` +
                     `📅 Start: ${startDate}\n` +
                     `📅 End: ${endDate}\n\n` +
-                    `🔇 Reminders will be paused during this period.`,
+                    `🔔 Reminders are active during this period.`,
                 flags: MessageFlags.Ephemeral
             });
         }
 
-        else if (subcommand === "clear-unavailable") {
+        else if (subcommand === "clear-available") {
             const config = loadConfig();
-            config.dvUnavailableStart = undefined;
-            config.dvUnavailableEnd = undefined;
+            config.dvAvailableStart = undefined;
+            config.dvAvailableEnd = undefined;
             saveConfig(config);
 
             await interaction.reply({
-                content: `✅ Unavailable period cleared!\n\n🔔 Reminders are now active.`,
+                content: `✅ Available period cleared!\n\n🔇 Reminders are now paused.`,
                 flags: MessageFlags.Ephemeral
             });
         }
@@ -115,24 +115,24 @@ export async function handleDvStatus(
         else if (subcommand === "status") {
             const config = loadConfig();
 
-            if (!config.dvUnavailableStart || !config.dvUnavailableEnd) {
+            if (!config.dvAvailableStart || !config.dvAvailableEnd) {
                 await interaction.reply({
-                    content: `✅ DV is **AVAILABLE**\n\n🔔 Reminders are active.`,
+                    content: `❌ DV is **UNAVAILABLE**\n\n🔇 Reminders are paused.`,
                     flags: MessageFlags.Ephemeral
                 });
                 return;
             }
 
             const today = new Date().toISOString().split("T")[0];
-            const isUnavailable = today >= config.dvUnavailableStart && today <= config.dvUnavailableEnd;
+            const isAvailable = today >= config.dvAvailableStart && today <= config.dvAvailableEnd;
 
-            const status = isUnavailable ? "❌ **UNAVAILABLE**" : "✅ **AVAILABLE**";
-            const bell = isUnavailable ? "🔇" : "🔔";
+            const status = isAvailable ? "✅ **AVAILABLE**" : "❌ **UNAVAILABLE**" ;
+            const bell = isAvailable ? "🔔" : "🔇";
 
             await interaction.reply({
                 content: `${status}\n\n` +
-                    `📅 Period: ${config.dvUnavailableStart} to ${config.dvUnavailableEnd}\n` +
-                    `${bell} ${isUnavailable ? "Reminders paused" : "Reminders active"}`,
+                    `📅 Period: ${config.dvAvailableStart} to ${config.dvAvailableEnd}\n` +
+                    `${bell} ${isAvailable ?  "Reminders active" : "Reminders paused"}`,
                 flags: MessageFlags.Ephemeral
             });
         }

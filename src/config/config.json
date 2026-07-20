@@ -1,15 +1,16 @@
 {
     "channelID": "1528714738823987231",
     "roleID": "1528714479993491557",
-    "hour": 21,
-    "minute": 17,
+    "hour": 4,
+    "minute": 0,
     "days": [
         0,
         1,
-        2,
         3,
         4,
         5,
         6
-    ]
+    ],
+    "dvAvailableStart": "2026-06-01",
+    "dvAvailableEnd": "2026-08-24"
 }

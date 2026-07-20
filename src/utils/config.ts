@@ -7,8 +7,8 @@ export interface Config {
     hour: number;
     minute: number;
     days: number[];
-    dvUnavailableStart?: string; // ISO string (YYYY-MM-DD)
-    dvUnavailableEnd?: string;   // ISO string (YYYY-MM-DD)
+    dvAvailableStart?:string;
+    dvAvailableEnd?:string;
 }
 
 const CONFIG_DIR = path.join(process.cwd(), "src", "config");
@@ -16,11 +16,11 @@ const CONFIG_FILE = path.join(CONFIG_DIR, "config.json");
 
 export function loadConfig(): Config {
     try {
-        if (fs.existsSync(CONFIG_FILE)) {
-            const data = fs.readFileSync(CONFIG_FILE, "utf-8");
-            return JSON.parse(data);
+        if (!fs.existsSync(CONFIG_FILE)) {
+            throw new Error(`Config file not found at ${CONFIG_FILE}`);
         }
-
+        const data = fs.readFileSync(CONFIG_FILE, "utf-8");
+        return JSON.parse(data);
     } catch (error) {
         console.error("Error loading config:", error);
         throw error;
@@ -43,17 +43,43 @@ export function saveConfig(config: Config): void {
  * Check if DV is currently available
  * Returns false if we're within the unavailable date range
  */
-export function isDvAvailable(): boolean {
+export function isDvAvailable(){
+
     const config = loadConfig();
 
-    if (!config.dvUnavailableStart || !config.dvUnavailableEnd) {
-        return true; // Available by default
+
+    if(
+
+        !config.dvAvailableStart ||
+
+        !config.dvAvailableEnd
+
+    ){
+
+        return false;
+
     }
 
-    const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
-    const start = config.dvUnavailableStart;
-    const end = config.dvUnavailableEnd;
 
-    // Check if today is within the unavailable range
-    return !(today >= start && today <= end);
+    const today =
+
+        new Date()
+
+            .toISOString()
+
+            .split("T")[0];
+
+
+    return(
+
+        today >=
+        config.dvAvailableStart
+
+        &&
+
+        today <=
+        config.dvAvailableEnd
+
+    );
+
 }

@@ -47,7 +47,7 @@ export async function handleSetup(
     const role = interaction.options.getRole("role", true);
     const hour = interaction.options.getInteger("hour", true);
     const minute = interaction.options.getInteger("minute", true);
-    const days = [0,1,2,3,4,5,6]
+    const days = [0,1,3,4,5,6]
 
     saveConfig({
         channelID: channel.id,

@@ -11,7 +11,9 @@ export async function createDefaultConfig() {
 
         await Config.create({
 
-            channelID: "",
+            channelAnnouncementID: "",
+
+            channelReminderID: "",
 
             roleID: "",
 

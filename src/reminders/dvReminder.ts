@@ -100,7 +100,7 @@ export function startDvReminder(client: Client) {
 
                 const channel =
                     await client.channels.fetch(
-                        config.channelID
+                        config.channelReminderID
                     );
 
 

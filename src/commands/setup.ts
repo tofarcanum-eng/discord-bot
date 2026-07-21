@@ -11,23 +11,29 @@ export const setupCommand = new SlashCommandBuilder()
     .setName("setup")
     .setDescription("Configure the reminder bot.")
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+
+    .addChannelOption(option => option
+        .setName("announcement-channel")
+        .setDescription("Select a channel for Announcements.")
+        .setRequired(true)
+    )
     .addChannelOption(option =>
         option
-            .setName("channel")
-            .setDescription("Select a channel.")
-            .setRequired(true)
+            .setName("reminder-channel")
+            .setDescription("Select a channel for DV reminder.")
+            .setRequired(false)
     )
     .addRoleOption(option =>
         option
             .setName("role")
             .setDescription("Select a role.")
-            .setRequired(true)
+            .setRequired(false)
     )
     .addIntegerOption(option =>
         option
             .setName("hour")
             .setDescription("Hour (0-23)")
-            .setRequired(true)
+            .setRequired(false)
             .setMinValue(0)
             .setMaxValue(23)
     )
@@ -35,7 +41,7 @@ export const setupCommand = new SlashCommandBuilder()
         option
             .setName("minute")
             .setDescription("Minute (0-59)")
-            .setRequired(true)
+            .setRequired(false)
             .setMinValue(0)
             .setMaxValue(59)
     );
@@ -43,10 +49,11 @@ export const setupCommand = new SlashCommandBuilder()
 export async function handleSetup(
     interaction: ChatInputCommandInteraction
 ) {
-    const channel = interaction.options.getChannel("channel", true);
-    const role = interaction.options.getRole("role", true);
-    const hour = interaction.options.getInteger("hour", true);
-    const minute = interaction.options.getInteger("minute", true);
+    const channelReminder = interaction.options.getChannel("reminder-channel", false);
+    const channelAnnouncement = interaction.options.getChannel("announcement-channel", true);
+    const role = interaction.options.getRole("role", false);
+    const hour = interaction.options.getInteger("hour", false);
+    const minute = interaction.options.getInteger("minute", false);
     const days = [0,1,3,4,5,6]
 
     const config = await Config.findOne();
@@ -59,23 +66,23 @@ export async function handleSetup(
 
     }
 
-    config.channelID = channel.id;
+    config.channelReminderID = channelReminder?.id || "";
 
-    config.roleID = role.id;
+    config.channelAnnouncementID = channelAnnouncement.id;
 
-    config.hour = hour;
+    config.roleID = role?.id || "";
 
-    config.minute = minute;
+    config.hour = Number(hour);
+
+    config.minute = Number(minute);
 
     config.days = days;
 
     await config.save();
 
+
     await interaction.reply({
-        content: `Configuration Saved!\n\n` +
-            `Channel: <#${channel.id}>\n` +
-            `Role: <@&${role.id}>\n` +
-            `Time: ${hour}:${minute.toString().padStart(2, "0")}`,
+        content: `Configuration Saved!`,
         flags: MessageFlags.Ephemeral
     });
 }

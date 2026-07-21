@@ -4,7 +4,9 @@ import mongoose from "mongoose";
 export interface IConfig
     extends mongoose.Document {
 
-    channelID: string;
+    channelReminderID: string;
+
+    channelAnnouncementID: string;
 
     roleID: string;
 
@@ -23,12 +25,17 @@ export interface IConfig
 
 const configSchema = new mongoose.Schema<IConfig>({
 
-    channelID: {
+    channelReminderID: {
 
         type: String,
 
         default: ""
 
+    },
+
+    channelAnnouncementID: {
+        type: String,
+        default: ""
     },
 
 

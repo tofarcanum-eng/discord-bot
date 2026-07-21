@@ -12,9 +12,12 @@ dotenv.config();
 import { startDvReminder } from "./reminders/dvReminder";
 
 import { setupCommand, handleSetup } from "./commands/setup";
+import {
+    announceCommand,
+    handleAnnounce,
+    handleAnnounceModal
+} from "./commands/announce";
 import { dvStatusCommand, handleDvStatus } from "./commands/dvStatus";
-
-
 import express from "express";
 import {Request, Response} from "express";
 import connectDB from "./utils/connectDB";
@@ -50,7 +53,8 @@ client.once("clientReady", async (client) => {
         {
             body: [
                 setupCommand.toJSON(),
-                dvStatusCommand.toJSON()
+                dvStatusCommand.toJSON(),
+                announceCommand.toJSON()
             ]
         }
     );
@@ -61,18 +65,93 @@ client.once("clientReady", async (client) => {
     startDvReminder(client);
 });
 
-client.on("interactionCreate", async (interaction) => {
-    if (!interaction.isChatInputCommand()) {
-        return;
+client.on(
+
+    "interactionCreate",
+
+    async (interaction) => {
+
+
+        // Slash Commands
+
+        if (
+
+            interaction.isChatInputCommand()
+
+        ) {
+
+            if (
+
+                interaction.commandName ===
+                "setup"
+
+            ) {
+
+                await handleSetup(
+                    interaction
+                );
+
+            }
+
+
+            else if (
+
+                interaction.commandName ===
+                "dv-status"
+
+            ) {
+
+                await handleDvStatus(
+                    interaction
+                );
+
+            }
+
+
+            else if (
+
+                interaction.commandName ===
+                "announce"
+
+            ) {
+
+                await handleAnnounce(
+                    interaction
+                );
+
+            }
+
+        }
+
+
+        // Modals
+
+        else if (
+
+            interaction.isModalSubmit()
+
+        ) {
+
+            if (
+
+                interaction.customId ===
+                "announce-modal"
+
+            ) {
+
+                await handleAnnounceModal(
+
+                    interaction
+
+                );
+
+            }
+
+        }
+
+
     }
 
-    if (interaction.commandName === "setup") {
-        await handleSetup(interaction);
-    }
-
-    if (interaction.commandName === "dv-status") {
-        await handleDvStatus(interaction);
-    }
-});
+);
 
 void client.login(process.env.TOKEN);

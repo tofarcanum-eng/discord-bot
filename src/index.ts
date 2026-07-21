@@ -17,6 +17,9 @@ import { dvStatusCommand, handleDvStatus } from "./commands/dvStatus";
 
 import express from "express";
 import {Request, Response} from "express";
+import connectDB from "./utils/connectDB";
+import {createDefaultConfig} from "./utils/createDefaultConfig";
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -53,6 +56,8 @@ client.once("clientReady", async (client) => {
     );
 
     console.log("✅ Slash commands registered.");
+    await connectDB();
+    await createDefaultConfig();
     startDvReminder(client);
 });
 

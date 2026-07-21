@@ -5,7 +5,7 @@ import {
     MessageFlags
 } from "discord.js";
 
-import { loadConfig, saveConfig } from "../utils/config";
+import {Config} from "../models/configModel";
 
 export const dvStatusCommand = new SlashCommandBuilder()
     .setName("dv-status")
@@ -86,10 +86,18 @@ export async function handleDvStatus(
                 return;
             }
 
-            const config = loadConfig();
+            const config = await Config.findOne();
+            if (!config) {
+
+                await interaction.reply({
+                    content: "No configuration found."
+                });
+
+                return;
+            }
             config.dvAvailableStart = startDate;
             config.dvAvailableEnd = endDate;
-            saveConfig(config);
+            await Config.updateOne({}, config)
 
             await interaction.reply({
                 content: `✅ DV available period set!\n\n` +
@@ -101,10 +109,16 @@ export async function handleDvStatus(
         }
 
         else if (subcommand === "clear-available") {
-            const config = loadConfig();
-            config.dvAvailableStart = undefined;
-            config.dvAvailableEnd = undefined;
-            saveConfig(config);
+            const config = await Config.findOne();
+            if (!config) {
+                await interaction.reply({
+                    content: "No configuration found."
+                });
+                return;
+            }
+            config.dvAvailableStart = null;
+            config.dvAvailableEnd = null;
+            await Config.updateOne({}, config)
 
             await interaction.reply({
                 content: `✅ Available period cleared!\n\n🔇 Reminders are now paused.`,
@@ -113,7 +127,14 @@ export async function handleDvStatus(
         }
 
         else if (subcommand === "status") {
-            const config = loadConfig();
+            const config = await Config.findOne();
+
+            if (!config) {
+                await interaction.reply({
+                    content: "No configuration found."
+                });
+                return;
+            }
 
             if (!config.dvAvailableStart || !config.dvAvailableEnd) {
                 await interaction.reply({

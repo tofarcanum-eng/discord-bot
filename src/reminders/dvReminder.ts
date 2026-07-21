@@ -1,10 +1,14 @@
 import { Client, TextChannel, EmbedBuilder, AttachmentBuilder } from "discord.js";
 import cron from "node-cron";
-import { loadConfig, isDvAvailable } from "../utils/config";
+import {isDvAvailable } from "../utils/isDvAvailable";
 import { dvReminderMessage } from "../messages/dvReminderMessage";
+import {Config} from "../models/configModel";
 
-export function startDvReminder(client: Client) {
-    const config = loadConfig();
+export async function startDvReminder(client: Client) {
+    const config = await Config.findOne();
+    if (!config) {
+        return;
+    }
     const days = config.days.join(",");
 
     const cronTime = `${config.minute} ${config.hour} * * ${days}`;
@@ -24,7 +28,7 @@ export function startDvReminder(client: Client) {
         async () => {
             try {
                 // Check if DV is available
-                if (!isDvAvailable()) {
+                if (!isDvAvailable(config)) {
                     console.log("⏸️  DV is unavailable - reminder skipped");
                     return;
                 }

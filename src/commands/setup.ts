@@ -5,7 +5,7 @@ import {
     MessageFlags
 } from "discord.js";
 
-import { saveConfig } from "../utils/config";
+import {Config} from "../models/configModel";
 
 export const setupCommand = new SlashCommandBuilder()
     .setName("setup")
@@ -49,13 +49,27 @@ export async function handleSetup(
     const minute = interaction.options.getInteger("minute", true);
     const days = [0,1,3,4,5,6]
 
-    saveConfig({
-        channelID: channel.id,
-        roleID: role.id,
-        hour,
-        minute,
-        days
-    });
+    const config = await Config.findOne();
+
+    if (!config) {
+
+        throw new Error(
+            "Configuration not found."
+        );
+
+    }
+
+    config.channelID = channel.id;
+
+    config.roleID = role.id;
+
+    config.hour = hour;
+
+    config.minute = minute;
+
+    config.days = days;
+
+    await config.save();
 
     await interaction.reply({
         content: `Configuration Saved!\n\n` +

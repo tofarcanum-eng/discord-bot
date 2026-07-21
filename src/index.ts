@@ -14,6 +14,23 @@ import { startDvReminder } from "./reminders/dvReminder";
 import { setupCommand, handleSetup } from "./commands/setup";
 import { dvStatusCommand, handleDvStatus } from "./commands/dvStatus";
 
+
+import express from "express";
+import {Request, Response} from "express";
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Health endpoint for Uptime Robot
+app.get("/health", (req: Request, res: Response) => {
+    res.status(200).json({ status: "Bot is alive ✅" });
+});
+
+app.listen(PORT, () => {
+    console.log(`🌐 HTTP Server running on port ${PORT}`);
+});
+
+
 const client = new Client({
     intents: [GatewayIntentBits.Guilds]
 });

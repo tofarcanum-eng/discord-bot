@@ -8,7 +8,6 @@ import {
     ActionRowBuilder,
     ModalSubmitInteraction,
     EmbedBuilder,
-    TextChannel,
     MessageFlags
 } from "discord.js";
 import { Config } from "../models/configModel";
@@ -283,8 +282,7 @@ export async function handleAnnounceModal(
             );
 
 
-        if (!(channel instanceof TextChannel)) {
-
+        if (!channel?.isTextBased() || !channel?.isSendable()) {
             await interaction.reply({
 
                 content:
@@ -294,7 +292,6 @@ export async function handleAnnounceModal(
                 MessageFlags.Ephemeral
 
             });
-
             return;
 
         }

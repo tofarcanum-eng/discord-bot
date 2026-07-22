@@ -23,6 +23,12 @@ import {Request, Response} from "express";
 import connectDB from "./utils/connectDB";
 import {createDefaultConfig} from "./utils/createDefaultConfig";
 import {fountainCommand, handleFountain, handleFountainModal} from "./commands/fountain";
+import {
+    handleMessageCommand,
+    handleMessageModalSubmit,
+    handleMessageRoleSelect,
+    messageCommand
+} from "./commands/message";
 
 
 const app = express();
@@ -56,7 +62,8 @@ client.once("clientReady", async (client) => {
                 setupCommand.toJSON(),
                 dvStatusCommand.toJSON(),
                 announceCommand.toJSON(),
-                fountainCommand.toJSON()
+                fountainCommand.toJSON(),
+                messageCommand.toJSON()
             ]
         }
     );
@@ -117,6 +124,8 @@ client.on(
 
             } else if (interaction.commandName === "fountain") {
                 await handleFountain(interaction);
+            } else if (interaction.commandName === "message") {
+                await handleMessageCommand(interaction);
             }
 
         }
@@ -153,8 +162,15 @@ client.on(
 
                 );
 
+            } else if (interaction.customId === "message-modal") {
+                await handleMessageModalSubmit(interaction);
             }
 
+
+        } else if (interaction.isRoleSelectMenu()) {
+            if (interaction.customId.startsWith("message-roles")) {
+                await handleMessageRoleSelect(interaction);
+            }
         }
 
     }

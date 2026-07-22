@@ -15,6 +15,8 @@ export async function createDefaultConfig() {
 
             channelReminderID: "",
 
+            channelFountainID: "",
+
             roleID: "",
 
             hour: 4,

@@ -8,6 +8,8 @@ export interface IConfig
 
     channelAnnouncementID: string;
 
+    channelFountainID: string;
+
     roleID: string;
 
     hour: number;
@@ -34,6 +36,11 @@ const configSchema = new mongoose.Schema<IConfig>({
     },
 
     channelAnnouncementID: {
+        type: String,
+        default: ""
+    },
+
+    channelFountainID: {
         type: String,
         default: ""
     },

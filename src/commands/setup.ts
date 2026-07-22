@@ -23,6 +23,12 @@ export const setupCommand = new SlashCommandBuilder()
             .setDescription("Select a channel for DV reminder.")
             .setRequired(false)
     )
+    .addChannelOption(option =>
+    option
+        .setName("fountain-channel")
+        .setDescription("Select a channel for Fountain messages.")
+        .setRequired(false)
+    )
     .addRoleOption(option =>
         option
             .setName("role")
@@ -49,8 +55,9 @@ export const setupCommand = new SlashCommandBuilder()
 export async function handleSetup(
     interaction: ChatInputCommandInteraction
 ) {
-    const channelReminder = interaction.options.getChannel("reminder-channel", false);
     const channelAnnouncement = interaction.options.getChannel("announcement-channel", true);
+    const channelReminder = interaction.options.getChannel("reminder-channel", false);
+    const channelFountain =  interaction.options.getChannel("fountain-channel", false);
     const role = interaction.options.getRole("role", false);
     const hour = interaction.options.getInteger("hour", false);
     const minute = interaction.options.getInteger("minute", false);
@@ -66,9 +73,11 @@ export async function handleSetup(
 
     }
 
+    config.channelAnnouncementID = channelAnnouncement.id;
+
     config.channelReminderID = channelReminder?.id || "";
 
-    config.channelAnnouncementID = channelAnnouncement.id;
+    config.channelFountainID = channelFountain?.id || "";
 
     config.roleID = role?.id || "";
 

@@ -22,6 +22,7 @@ import express from "express";
 import {Request, Response} from "express";
 import connectDB from "./utils/connectDB";
 import {createDefaultConfig} from "./utils/createDefaultConfig";
+import {fountainCommand, handleFountain, handleFountainModal} from "./commands/fountain";
 
 
 const app = express();
@@ -54,7 +55,8 @@ client.once("clientReady", async (client) => {
             body: [
                 setupCommand.toJSON(),
                 dvStatusCommand.toJSON(),
-                announceCommand.toJSON()
+                announceCommand.toJSON(),
+                fountainCommand.toJSON()
             ]
         }
     );
@@ -91,10 +93,7 @@ client.on(
                     interaction
                 );
 
-            }
-
-
-            else if (
+            } else if (
 
                 interaction.commandName ===
                 "dv-status"
@@ -105,10 +104,7 @@ client.on(
                     interaction
                 );
 
-            }
-
-
-            else if (
+            } else if (
 
                 interaction.commandName ===
                 "announce"
@@ -119,6 +115,8 @@ client.on(
                     interaction
                 );
 
+            } else if (interaction.commandName === "fountain") {
+                await handleFountain(interaction);
             }
 
         }
@@ -140,7 +138,17 @@ client.on(
             ) {
 
                 await handleAnnounceModal(
+                    interaction
+                );
 
+            } else if (
+
+                interaction.customId ===
+                "fountain-modal"
+
+            ) {
+
+                await handleFountainModal(
                     interaction
 
                 );
@@ -148,7 +156,6 @@ client.on(
             }
 
         }
-
 
     }
 

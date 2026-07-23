@@ -70,7 +70,7 @@ export async function handleFountain(
             )
 
             .setLabel(
-                "Diamonds"
+                "Diamonds 20k - 70k"
             )
 
             .setRequired(
@@ -157,14 +157,14 @@ export async function handleFountainModal(
 
         if (
 
-            !Number.isInteger(diamonds)
+            !Number.isInteger(diamonds) || diamonds < 20000 || diamonds > 70000
 
         ){
 
             await interaction.reply({
 
                 content:
-                    "❌ diamonds amount must be an number.",
+                    "❌ diamonds amount must be an number and between 20000 and 70000",
 
                 flags:
                 MessageFlags.Ephemeral

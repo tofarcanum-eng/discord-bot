@@ -29,6 +29,7 @@ import {
     handleMessageRoleSelect,
     messageCommand
 } from "./commands/message";
+import {configCommand, handleConfig} from "./commands/config";
 
 
 const app = express();
@@ -63,7 +64,8 @@ client.once("clientReady", async (client) => {
                 dvStatusCommand.toJSON(),
                 announceCommand.toJSON(),
                 fountainCommand.toJSON(),
-                messageCommand.toJSON()
+                messageCommand.toJSON(),
+                configCommand.toJSON()
             ]
         }
     );
@@ -126,6 +128,8 @@ client.on(
                 await handleFountain(interaction);
             } else if (interaction.commandName === "message") {
                 await handleMessageCommand(interaction);
+            } else if (interaction.commandName === "config") {
+                await handleConfig(interaction);
             }
 
         }

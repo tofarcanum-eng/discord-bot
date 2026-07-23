@@ -6,14 +6,13 @@ import {
     TextInputBuilder,
     TextInputStyle,
     ActionRowBuilder,
-    RoleSelectMenuBuilder,
-    MessageComponentInteraction,
-    MessageFlags, ModalSubmitInteraction
+    MessageFlags,
+    ModalSubmitInteraction,
+    MessageComponentInteraction
 } from "discord.js";
-import {Config} from "../models/configModel";
-
-// Store message data temporarily (max 15 min before Discord discards interaction)
-const messageDataStore = new Map<string, string>();
+import { Config } from "../models/configModel";
+import { showSendOptions, storeSendOptionData } from "../utils/sendOptions";
+import { messageDataStore } from "../utils/sendOptionButtonHandlers";
 
 export const messageCommand = new SlashCommandBuilder()
     .setName("message")
@@ -24,7 +23,6 @@ export async function handleMessageCommand(
     interaction: ChatInputCommandInteraction
 ) {
     try {
-        // Create modal for message content
         const modal = new ModalBuilder()
             .setCustomId(`message-modal`)
             .setTitle("Send Announcement");
@@ -53,46 +51,28 @@ export async function handleMessageModalSubmit(
     interaction: ModalSubmitInteraction
 ) {
     try {
-
         const content = interaction.fields.getTextInputValue("message_content");
 
-        // Store the content temporarily
-        messageDataStore.set(
-            interaction.user.id,
-            content
-        );
+        const config = await Config.findOne();
+        if (!config) {
+            await interaction.reply({
+                content: "❌ Configuration not found.",
+                flags: MessageFlags.Ephemeral
+            });
+            return;
+        }
 
-        const selector = new RoleSelectMenuBuilder()
-            .setCustomId("message-roles")
-            .setPlaceholder("Select roles to ping.")
-            .setMinValues(0)
-            .setMaxValues(5);
+        // Store the message content
+        storeSendOptionData(interaction.user.id, "message", content, messageDataStore);
 
-
-        const row =
-            new ActionRowBuilder<RoleSelectMenuBuilder>()
-                .addComponents(selector);
-
-
-        await interaction.reply({
-
-            content:
-                "Select the roles you would like to ping.",
-
-            components:[
-                row
-            ],
-
-            flags:
-            MessageFlags.Ephemeral
-
-        });
+        // Show send options
+        await showSendOptions(interaction);
 
     } catch (error) {
         console.error("Error in handleMessageModalSubmit:", error);
         if (!interaction.replied) {
             await interaction.reply({
-                content: "❌ An error occurred processing the modal.",
+                content: `❌ ${error instanceof Error ? error.message : "An error occurred processing the modal."}`,
                 flags: MessageFlags.Ephemeral
             });
         }
@@ -101,6 +81,7 @@ export async function handleMessageModalSubmit(
 
 /**
  * Handle role selection and send message
+ * This is called from the message send button handler
  */
 export async function handleMessageRoleSelect(
     interaction: MessageComponentInteraction
@@ -108,11 +89,11 @@ export async function handleMessageRoleSelect(
     try {
         if (!interaction.isRoleSelectMenu()) return;
 
-        let content = messageDataStore.get(
-            interaction.user.id
-        );
+        const userIdFromCustomId = interaction.customId.split("_")[1];
+        const channelId = messageDataStore.get(`${userIdFromCustomId}:message:channel`);
+        const content = messageDataStore.get(`${userIdFromCustomId}:message:content`);
 
-        if (!content) {
+        if (!content || !channelId) {
             await interaction.reply({
                 content: "❌ Message data expired. Please run /message again.",
                 flags: MessageFlags.Ephemeral
@@ -123,65 +104,54 @@ export async function handleMessageRoleSelect(
         // Get selected role IDs
         const selectedRoleIds = interaction.values;
 
-        // Defer reply as we're about to send a message
+        // Defer reply
         await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         // Get the channel
-        const config = await Config.findOne();
-        if(!config) return;
-        const channel = await interaction.client.channels.fetch(
+        const channel = await interaction.client.channels.fetch(channelId);
 
-            config.channelAnnouncementID
+        if (!channel?.isTextBased() || !channel?.isSendable()) {
+            await interaction.editReply({
+                content: "❌ Target channel is invalid."
+            });
+            return;
+        }
 
-        );
-
-        // Add role pings at the beginning if any roles selected
-        const rolePings = selectedRoleIds
-            .map(id => `<@&${id}>`)
-            .join(" ");
-
-        if (rolePings.length > 0) {
-            content = `${rolePings}\n\n${content}`;
+        // Build message with role pings
+        let finalContent = content;
+        if (selectedRoleIds.length > 0) {
+            const rolePings = selectedRoleIds.map(id => `<@&${id}>`).join(" ");
+            finalContent = `${rolePings}\n\n${content}`;
         }
 
         // Send the message
-        if (!channel?.isTextBased() || !channel?.isSendable()) {
-            await interaction.reply({
-
-                content:
-                    "❌ Announcement channel is invalid.",
-
-                flags:
-                MessageFlags.Ephemeral
-
-            });
-            return;
-
-        }
-
         await channel.send({
-            content,
+            content: finalContent,
             allowedMentions: {
                 roles: selectedRoleIds
             }
         });
 
         // Confirm to admin
-        const rolesCount = selectedRoleIds.length;
         await interaction.editReply({
-            content: `✅ Message sent to <#${channel.id}>!\n\n` +
-                `📢 Roles pinged: ${rolesCount > 0 ? rolesCount : 'None'}`
+            content: `✅ Message sent to <#${channelId}>!\n📢 Roles pinged: ${selectedRoleIds.length > 0 ? selectedRoleIds.length : "None"}`
         });
 
         // Clean up
-        messageDataStore.delete(interaction.user.id);
+        messageDataStore.delete(userIdFromCustomId);
+        messageDataStore.delete(`${userIdFromCustomId}:message:channel`);
+        messageDataStore.delete(`${userIdFromCustomId}:message:content`);
 
     } catch (error) {
         console.error("Error in handleMessageRoleSelect:", error);
-        if (!interaction.replied) {
+        if (!interaction.replied && !interaction.deferred) {
             await interaction.reply({
-                content: "❌ An error occurred sending the message.",
+                content: `❌ ${error instanceof Error ? error.message : "An error occurred sending the message."}`,
                 flags: MessageFlags.Ephemeral
+            });
+        } else {
+            await interaction.editReply({
+                content: `❌ ${error instanceof Error ? error.message : "An error occurred sending the message."}`
             });
         }
     }

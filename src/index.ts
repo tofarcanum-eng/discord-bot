@@ -17,6 +17,12 @@ import {
     handleAnnounce,
     handleAnnounceModal
 } from "./commands/announce";
+import {
+    handleAnnounceSendButton,
+    handleMessageSendButton,
+    announceDataStore,
+    messageDataStore
+} from "./utils/sendOptionButtonHandlers";
 import { dvStatusCommand, handleDvStatus } from "./commands/dvStatus";
 import express from "express";
 import {Request, Response} from "express";
@@ -174,6 +180,19 @@ client.on(
         } else if (interaction.isRoleSelectMenu()) {
             if (interaction.customId.startsWith("message-roles")) {
                 await handleMessageRoleSelect(interaction);
+            }
+        } else if (interaction.isButton()) {
+            if (interaction.customId.includes("send-current-channel") ||
+                interaction.customId.includes("send-announcement-channel") ||
+                interaction.customId.includes("send-cancel")) {
+
+                const userId = interaction.user.id;
+
+                if (announceDataStore.has(`${userId}:announce`)) {
+                    await handleAnnounceSendButton(interaction);
+                } else if (messageDataStore.has(`${userId}:message`)) {
+                    await handleMessageSendButton(interaction);
+                }
             }
         }
 

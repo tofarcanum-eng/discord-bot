@@ -9,13 +9,13 @@ import {Config} from "../models/configModel";
 
 export const setupCommand = new SlashCommandBuilder()
     .setName("setup")
-    .setDescription("Configure the reminder bot.")
+    .setDescription("Configure the bot.")
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
 
     .addChannelOption(option => option
         .setName("announcement-channel")
         .setDescription("Select a channel for Announcements.")
-        .setRequired(true)
+        .setRequired(false)
     )
     .addChannelOption(option =>
         option
@@ -55,7 +55,7 @@ export const setupCommand = new SlashCommandBuilder()
 export async function handleSetup(
     interaction: ChatInputCommandInteraction
 ) {
-    const channelAnnouncement = interaction.options.getChannel("announcement-channel", true);
+    const channelAnnouncement = interaction.options.getChannel("announcement-channel", false);
     const channelReminder = interaction.options.getChannel("reminder-channel", false);
     const channelFountain =  interaction.options.getChannel("fountain-channel", false);
     const role = interaction.options.getRole("role", false);
@@ -73,17 +73,17 @@ export async function handleSetup(
 
     }
 
-    config.channelAnnouncementID = channelAnnouncement.id;
+    config.channelAnnouncementID = channelAnnouncement?.id || config.channelAnnouncementID;
 
-    config.channelReminderID = channelReminder?.id || "";
+    config.channelReminderID = channelReminder?.id || config.channelReminderID;
 
-    config.channelFountainID = channelFountain?.id || "";
+    config.channelFountainID = channelFountain?.id || config.channelFountainID;
 
-    config.roleID = role?.id || "";
+    config.roleID = role?.id || config.roleID;
 
-    config.hour = Number(hour);
+    config.hour = Number(hour) || config.hour;
 
-    config.minute = Number(minute);
+    config.minute = Number(minute) || config.minute;
 
     config.days = days;
 
